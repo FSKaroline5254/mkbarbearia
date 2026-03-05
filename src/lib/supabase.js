@@ -30,23 +30,23 @@ export async function getBusinessHours() {
     .select('*')
     .order('day_of_week');
   if (error) throw error;
-  // Converte para o formato { 0: {open, close} | null, ... }
   const hours = {};
   data.forEach(row => {
     hours[row.day_of_week] = row.is_open
-      ? { open: row.open_time, close: row.close_time }
+      ? { open: row.open_time, close: row.close_time, breaks: row.breaks || [] }
       : null;
   });
   return hours;
 }
 
-export async function updateBusinessHours(dayOfWeek, isOpen, openTime, closeTime) {
+export async function updateBusinessHours(dayOfWeek, isOpen, openTime, closeTime, breaks) {
   const { error } = await supabase
     .from('business_hours')
     .update({
       is_open: isOpen,
       open_time: openTime || '10:00',
-      close_time: closeTime || '20:00'
+      close_time: closeTime || '20:00',
+      breaks: breaks || []
     })
     .eq('day_of_week', dayOfWeek);
   if (error) throw error;
@@ -70,6 +70,8 @@ export async function createAppointment(appointment) {
       services: appointment.services,
       service_ids: appointment.serviceIds,
       total_duration: appointment.totalDuration,
+      active_duration: appointment.activeDuration,
+      has_passive: appointment.hasPassive,
       total_price: appointment.totalPrice,
       date: appointment.date,
       time: appointment.time,
